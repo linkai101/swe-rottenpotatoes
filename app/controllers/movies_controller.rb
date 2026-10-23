@@ -3,12 +3,27 @@ class MoviesController < ApplicationController
 
   # GET /movies or /movies.json
   def index
+    # landing here without any settings (e.g. "Back to movies"): restore the
+    # remembered ones through the URL so it stays RESTful
+    if !(params.key?(:ratings) || params.key?(:sort_by)) &&
+       (session[:ratings].present? || session[:sort_by].present?)
+      flash.keep
+      return redirect_to movies_path(ratings: session[:ratings].to_a.index_with { "1" }.presence,
+                                     sort_by: session[:sort_by])
+    end
+
     @all_ratings = Movie.all_ratings
     selected = params[:ratings].present? ? params[:ratings].keys : []
     # no boxes checked (or first visit) means show everything, all boxes checked
     @ratings_to_show = selected.presence || @all_ratings
     # only sort on known columns, since the value comes from the user
     @sort_by = params[:sort_by] if Movie.sortable_columns.include?(params[:sort_by])
+    # explicitly submitted settings replace the remembered ones
+    # (unchecking everything is saved as an empty list, i.e. show all)
+    if params.key?(:ratings) || params.key?(:sort_by)
+      session[:ratings] = selected
+      session[:sort_by] = @sort_by
+    end
     @movies = Movie.with_ratings(selected)
     @movies = @movies.order(@sort_by) if @sort_by
   end
