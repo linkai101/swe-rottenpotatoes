@@ -7,7 +7,10 @@ class MoviesController < ApplicationController
     selected = params[:ratings].present? ? params[:ratings].keys : []
     # no boxes checked (or first visit) means show everything, all boxes checked
     @ratings_to_show = selected.presence || @all_ratings
+    # only sort on known columns, since the value comes from the user
+    @sort_by = params[:sort_by] if Movie.sortable_columns.include?(params[:sort_by])
     @movies = Movie.with_ratings(selected)
+    @movies = @movies.order(@sort_by) if @sort_by
   end
 
   # GET /movies/1 or /movies/1.json
