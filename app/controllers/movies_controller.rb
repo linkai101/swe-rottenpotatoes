@@ -3,7 +3,11 @@ class MoviesController < ApplicationController
 
   # GET /movies or /movies.json
   def index
-    @movies = Movie.all
+    @all_ratings = Movie.all_ratings
+    selected = params[:ratings].present? ? params[:ratings].keys : []
+    # no boxes checked (or first visit) means show everything, all boxes checked
+    @ratings_to_show = selected.presence || @all_ratings
+    @movies = Movie.with_ratings(selected)
   end
 
   # GET /movies/1 or /movies/1.json
